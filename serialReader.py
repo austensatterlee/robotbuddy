@@ -1,12 +1,13 @@
 import serial
 import sys
-def rawRead(ser,filename):
+def rawRead(ser,filename,verbose=0):
     datas=[]
     while True:
         try:
             data=ser.read(1)
             datas.append(data)
-            sys.stdout.write( data )
+            if verbose:
+                sys.stdout.write( data )
         except KeyboardInterrupt:
             ser.close()
             print "Done!"
@@ -19,7 +20,7 @@ def rawRead(ser,filename):
         finally:
             fp.close()
 
-def parseRead(ser,filename):
+def parseRead(ser,filename,verbose=0):
     datas=[[]]
     i=0
     while True:
@@ -32,8 +33,9 @@ def parseRead(ser,filename):
                 printline=""
                 for n in datas[-1]:
                     printline+="{:8}".format(n)
-                sys.stdout.write(printline)
-                sys.stdout.write("\n")
+                if verbose:
+                    sys.stdout.write(printline)
+                    sys.stdout.write("\n")
                 datas.append([])
                 continue
             if i==0:
@@ -83,6 +85,7 @@ if __name__=="__main__":
     parser.add_argument('filename',type=str)
     parser.add_argument('-d','--device',type=int,default=9)
     parser.add_argument('-r','--rate',type=int,default=9600)
+    parser.add_argument('-v','--verbose',type=int,default=0)
     parsedArgs=parser.parse_args()
     config = {
             'device':parsedArgs.device-1,
@@ -90,5 +93,6 @@ if __name__=="__main__":
             }
     ser = serial.Serial(config['device'], config['rate'], timeout=0)
     filename=parsedArgs.filename
-    rawRead(ser,filename)
+    rawRead(ser,filename,verbose=parsedArgs.verbose)
+    ser.close()
 

@@ -1,6 +1,7 @@
 RemoteSystemsTempFiles/
 dvt/
 .metadata/
+*/Debug/*
 # Created by https://www.gitignore.io
 ### Python ###
 # Byte-compiled / optimized / DLL files
