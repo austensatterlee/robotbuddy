@@ -1,5 +1,10 @@
 import serial
 import sys
+import numpy as np
+## MPU-6050 Constants
+# don't forget to normalize to 0 mean and 1 std. before scaling.
+accelSens=16384. #LSB/(g)
+gyroSens=131. #LSB/(deg/sec)
 def rawRead(ser,filename,verbose=0):
     datas=[]
     while True:
@@ -78,6 +83,15 @@ def readCSV(filename):
         data.append(dataline)
     fp.close()
     return data
+
+def complementEstimates(rawgyro,rawaccel,coeffs=[0.98,0.02],dt=1e-3):
+    gyro = rawgyro/gyroSens
+    accel = rawaccel/accelSens
+    coeffs=array(coeffs)/sum(coeffs)
+    estimates=[0]
+    for x1,x2 in zip(gyro,accel):
+        estimates.append(coeffs[0]*(estimates[-1]+x1*dt)+coeffs[1]*x2)
+    return estimates
 
 if __name__=="__main__":
     import argparse
