@@ -168,4 +168,3 @@ void msDelay(unsigned int msTime)
 	for ( counter = 0; counter <= msTime; counter++)
 	__delay_cycles( 16000000/16000  );				// 1 millisecond delay
 }
-
