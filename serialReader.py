@@ -1,23 +1,24 @@
 import serial
 import sys
 import numpy as np
+import binascii,struct
 ## MPU-6050 Constants
 # don't forget to normalize to 0 mean and 1 std. before scaling.
 accelSens=16384. #LSB/(g)
 gyroSens=131. #LSB/(deg/sec)
-def rawRead(ser,filename,verbose=0):
+def rawRead(ser,filename,verbose=1):
     datas=[]
     while True:
         try:
             data=ser.read(1)
             datas.append(data)
             if verbose:
-                sys.stdout.write( data )
+                sys.stdout.write(data)
         except KeyboardInterrupt:
             ser.close()
             print "Done!"
             break
-    with open(filename,'wb') as fp:
+    with open(filename,'w') as fp:
         try:
             for data in datas:
                 fp.write(data)
@@ -25,39 +26,50 @@ def rawRead(ser,filename,verbose=0):
         finally:
             fp.close()
 
-def parseRead(ser,filename,verbose=0):
-    datas=[[]]
-    i=0
+def parseRead(ser,filename):
+    rxbuffer=[]
+    dataRows=[]
+    collectedData=[]
     while True:
         try:
+            if len(rxbuffer)==2:
+                print rxbuffer
+                parsed=struct.unpack('h',struct.pack('2B',*rxbuffer))[0]
+                collectedData.append(parsed)
+                sys.stdout.write(str(parsed))
+                rxbuffer=[]
+                continue
             data=ser.read(1)
-            if not data:
+            if data==0x0A:
+                dataRows.append(collectedData)
+                collectedData=[]
+                sys.stdout.write('\n')
                 continue
-            data=ord(data)
-            if len(datas[-1])==6:
-                printline=""
-                for n in datas[-1]:
-                    printline+="{:8}".format(n)
-                if verbose:
-                    sys.stdout.write(printline)
-                    sys.stdout.write("\n")
-                datas.append([])
+            elif data==0x20:
+                sys.stdout.write(' ')
                 continue
-            if i==0:
-                datas[-1].append(0)
-            datas[-1][-1]+=data<<i
-            i=(i+1)%4
+            elif not data:
+                continue
+            rxbuffer.append(ord(data))
         except KeyboardInterrupt:
+            dataRows.append(collectedData)
+            collectedData=[]
+            sys.stdout.write('\n')
+            ser.close()
             break
-        ser.close()
-        print "Done!"
-        with open(filename,'w') as fp:
-            try:
-                for line in datas:
-                    fp.write("{}\n".format(line))
-                print "Wrote to {}".format(filename)
-            finally:
-                fp.close()
+    print "Done!"
+    with open(filename,'wb') as fp:
+        for line in dataRows:
+            print line
+            i=0
+            for num in line:
+                i+=1
+                fp.write(str(num))
+                if i!=len(line):
+                    fp.write(' ')
+            fp.write('\n');
+        print "Wrote to {}".format(filename)
+        fp.close()
 
 def readCSV(filename):
     fp=open(filename)
@@ -75,7 +87,7 @@ def readCSV(filename):
         dataline=[]
         for num in line:
             try:
-                dataline.append(int(num))
+                dataline.append(num)
             except:
                 dataline.append(0)
         if longest>len(dataline):
@@ -107,6 +119,6 @@ if __name__=="__main__":
             }
     ser = serial.Serial(config['device'], config['rate'], timeout=0)
     filename=parsedArgs.filename
-    rawRead(ser,filename,verbose=parsedArgs.verbose)
+    parseRead(ser,filename)
     ser.close()
 
