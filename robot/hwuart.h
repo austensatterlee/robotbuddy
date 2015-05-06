@@ -11,9 +11,9 @@
 #include "msp430g2553.h"
 
 void initializeUART(void);
-void uartSendBytes(unsigned char*,unsigned char numBytes);
-void uartSendByte(unsigned char*);
-void uartSendString(unsigned char*);
+void uartSendBytes( char*,unsigned int numBytes);
+void uartSendByte( char*);
+void uartSendString( char*);
 
 
 #endif

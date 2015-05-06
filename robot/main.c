@@ -11,8 +11,8 @@
 // Sensor biases when still (accelx,accely,accelz,gyrox,gyroy,gyroz)
 // -7.37593331e+02,   1.99838676e+03,   1.58679221e+04,
 // -2.12991066e+02,   2.04664451e+02,   1.03180331e+01
-#define GYRO_BIAS -213
-#define ACCEL_BIAS -738
+#define GYRO_BIAS -213.0
+#define ACCEL_BIAS -738.0
 static const uint8_t UARTOUT=1;
 unsigned int duty=50;
 char forward=0;
@@ -23,6 +23,7 @@ double dt=0.001;
 double Kp=1;
 double Ki=1;
 double Kd=1;
+char message[64];
 
 double Kout=1;
 
@@ -31,8 +32,8 @@ double cAlpha = 0.98;
 double cBeta = 0.02;
 double gyro,accel;
 // Sensor sensitivities
-int gyroSense = 131;
-int accelSense = 16384;
+#define gyroSense 131.0;
+#define accelSense  16384.0;
 
 double output;
 
@@ -58,28 +59,34 @@ int main(void)
 
 
 	  P1DIR |= BIT4 + BIT5;
-	  //initializeTimer();
+	  initializeTimer();
 
 	  msDelay(10);							// Temporary wait. Can be shortened
 
 	  double preverror;
-	  int16_t angle;
+	  double angle;
 	  double error;
 	  double integral;
 	  double derivative;
 
 	  Kout=Kout*PWM_PERIOD;
+
+	  int c = 0;
+	  for (; c < 64; c++) {
+		  message[c] = ' ';
+	  }
+
 	  for (;;)
 	  	{
 		  	getMotion6( &ax, &ay, &az, &gx, &gy, &gz);
-		  	gyro = (gx-GYRO_BIAS)/gyroSense;
-		  	accel = (ax-ACCEL_BIAS)/accelSense;
+		  	gyro = ((double)(gx)-GYRO_BIAS)/gyroSense;
+		  	accel = ((double)(ax)-ACCEL_BIAS)/accelSense;
 
 		    /* State estimation */
 		  	angleEstimate = cAlpha*(angleEstimate + gyro*dt) + cBeta*accel;
 		  	angle = angleEstimate;
 		  	/* PID Control */
-		    error = -1*(double)angle;
+		    error = -1*angle;
 		    integral += error*dt;
 		    derivative = (error - preverror)*dt;
 		    output = Kp*error + Ki*integral + Kd*derivative;
@@ -96,7 +103,10 @@ int main(void)
 				// uartSendBytes(output,8);
 				// uartSendByte(0x20);
 				// ax, ay, az, gx, gy, gz have RAW values from accelerometer and gyroscope
-				//sprintf(message, "G:%f A:%f E:%f O:%f", gyro,accel,angleEstimate,output);
+				sprintf(message, "%x%x%x%x %x%x%x%x %x%x%x%x %x%x%x%x\n", gyro,accel,angleEstimate,output);
+			//sprintf(message, "G:%x", gyro);
+				//uartSendString(message);
+				//uartSendBytes(message,messageLength);
 				uartSendBytes(&output,8);
 				uartSendByte(0x20);
 				uartSendBytes(&gyro,8);
@@ -104,8 +114,8 @@ int main(void)
 				uartSendBytes(&accel,8);
 				uartSendByte(0x20);
 				uartSendBytes(&angleEstimate,8);
-				uartSendByte(0x20);
-				uartSendBytes(&error,8);
+//				uartSendByte(0x20);
+//				uartSendBytes(&error,4);
 //				uartSendBytes(&ay,4);
 //				uartSendByte(0x20);
 //				uartSendBytes(&az,4);

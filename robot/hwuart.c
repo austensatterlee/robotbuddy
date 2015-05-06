@@ -17,13 +17,13 @@ void initializeUART(void){
 }
 
 
-void uartSendByte(unsigned char *txByte){
+void uartSendByte( char *txByte){
 	while(!(IFG2 & UCA0TXIFG)); // wait until usci is ready
 	UCA0TXBUF = *txByte;
 }
 
 /* Send numBytes bytes of data starting from given memory address*/
-void uartSendBytes(unsigned char *txBytes, unsigned char numBytes){
+void uartSendBytes( char *txBytes, unsigned int numBytes){
 	while(numBytes--){
 		uartSendByte(txBytes);
 		txBytes++;
@@ -31,8 +31,9 @@ void uartSendBytes(unsigned char *txBytes, unsigned char numBytes){
 }
 
 /* Send data starting from given memory address until a null terminator is reached */
-void uartSendString(unsigned char *txString){
-	while(*txString!=0x0){
+void uartSendString( char *txString){
+	unsigned int len = strlen(txString);
+	while(len--){
 		uartSendByte(txString);
 		txString++;
 	}
