@@ -13,6 +13,10 @@ var sp = new SerialPort("/dev/tty.uart-A1FF4A7AB7480E34", {
   baudrate: 9600
 });
 
+// var sp = new SerialPort("/dev/cu.uart-A1FF4A7AB7480E34", {
+//   baudrate: 9600
+// });
+
 sp.on('open', function (error) {
   console.log('open', arguments);
 });
