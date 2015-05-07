@@ -9,21 +9,24 @@
 #ifndef __robot__StateEstimate__
 #define __robot__StateEstimate__
 
-#include <msp430.h>
+#include <msp430g2553.h>
 
 double getAngleEstimate();
+double getAngularVelocity();
+double getAngularAcceleration();
+void burnin();
 
-#define GYRO_BIAS 1.2
-#define GYRO_RANGE 131.0
+#define GYRO_BIAS 13
+#define GYRO_RANGE 1/131.0
 
-#define ACCEL_X_BIAS -7684.57407407
-#define ACCEL_X_RANGE 16384.0
+#define ACCEL_X_BIAS 0
+#define ACCEL_X_RANGE 1/16384.0
 
-#define ACCEL_Y_BIAS -862.14814815
-#define ACCEL_Y_RANGE 16384.0
+#define ACCEL_Y_BIAS 314
+#define ACCEL_Y_RANGE 1/16384.0
 
-#define ACCEL_Z_BIAS -661.60185185
-#define ACCEL_Z_RANGE 16384.0
+#define ACCEL_Z_BIAS 0
+#define ACCEL_Z_RANGE 1/16384.0
 
 #define HPF 0.98
 #define LPF (1-HPF)

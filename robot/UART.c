@@ -12,23 +12,13 @@
 
 void UART_init() {
     // initialize UART to USCI_A0
-    UCA0CTL1 |= UCSSEL_2;                     // Use SMCLK for UART
-    UCA0BR0 = 104;
-    UCA0BR1 = 0;
-    UCA0MCTL = UCBRS_0;						  // Modulation UCBRSx = 1
-    UCA0CTL1 &= ~UCSWRST;                     // Clear USCI for operation
-    IE2 |= UCA0RXIE;						  // enable USCI_A0 rx interrupt
-    
-    
-//    //Configure UART
-//    UCA0CTL1 |= UCSWRST;
-//    UCA0CTL1 = UCSSEL_2;
-//    UCA0MCTLW |= 0x0000;
-//    
-//    UCA0BR0 = 0xc4; // 9600 baud
-//    UCA0BR1 = 0x09;
-//    UCA0CTL1 &= ~UCSWRST; // release from reset
-//    UCA0IE |= UCRXIE;
+	UCA0CTL1 |= UCSWRST; 	// temporarily disable the USCI while we tinker with it
+    UCA0CTL1 |= UCSSEL_2;   // Use SMCLK for UART
+    UCA0BR0 = 226; // 9600 baud rate @ 12MHz
+    UCA0BR1 = 4;
+    UCA0MCTL = UCBRS_0 + UCBRF_0;
+    UCA0CTL1 &= ~UCSWRST;   // Clear USCI for operation
+    //IE2 |= UCA0RXIE;		// enable USCI_A0 rx interrupt
 }
 
 
@@ -55,12 +45,11 @@ void UART_out_str(char *txString) {
 }
 
 void UART_out_double(double data) {
-    UART_out_bytes(&data, 8);
-    UART_out_byte(SPACE);
+    UART_out_bytes((char*)&data, 8);
 }
 
 void UART_out_long(long data, unsigned char ndigits) {
-    unsigned char sign = ' ', s[6];
+    char sign = ' ', s[6];
     unsigned int i = 0;
     
     if(data < 0) {

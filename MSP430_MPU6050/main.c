@@ -18,7 +18,7 @@ static const uint8_t UARTOUT=1;
 unsigned int duty=50;
 char forward=0;
 unsigned int PWM_COUNTER=0;
-unsigned int PWM_PERIOD=1000;
+unsigned int PWM_PERIOD=10000;
 
 double dt=1;
 double Kp=1;

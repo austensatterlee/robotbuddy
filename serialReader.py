@@ -2,22 +2,31 @@ import serial
 import sys
 import numpy as np
 import binascii,struct
-## MPU-6050 Constants
-# don't forget to normalize to 0 mean and 1 std. before scaling.
-accelSens=16384. #LSB/(g)
-gyroSens=131. #LSB/(deg/sec)
-def rawRead(ser,filename,verbose=1):
+def rawRead(ser,filename=None,grouping=(4,8)):
     datas=[]
+    bytesReceived=0
     while True:
         try:
-            data=ser.read(1)
-            datas.append(data)
-            if verbose:
-                sys.stdout.write(data)
+            data=np.array(ser.read(1))
+            data=struct.unpack('B',data)[0]
+            if not data:
+                continue
+
+            sys.stdout.write("%02X"%data)
+            bytesReceived+=1
+            if np.mod(bytesReceived,grouping[0]*grouping[1])==0:
+                sys.stdout.write('\n')
+            elif np.mod(bytesReceived,grouping[0])==0:
+                sys.stdout.write(' ')
+            if filename:
+                datas.append(data)
         except KeyboardInterrupt:
             ser.close()
-            print "Done!"
+            sys.stdout.write('\n')
+            sys.stdout.write('Done!\n')
             break
+    if not filename:
+        return
     with open(filename,'w') as fp:
         try:
             for data in datas:
@@ -26,35 +35,40 @@ def rawRead(ser,filename,verbose=1):
         finally:
             fp.close()
 
-def parseRead(ser,filename):
+def parseRead(ser,filename,formats):
+    """
+    ser - serial stream
+    filename - output csv file
+    formats - ex: ['h','h','h','d'] is three shorts and a double per row
+
+    """
     rxbuffer=[]
     dataRows=[]
     collectedData=[]
-    formats=[(8,'d'),(8,'d'),(8,'d')]
     currFormat=0
+    format_sizes=map(struct.calcsize,formats)
+    print formats,format_sizes
     while True:
         try:
-            if len(rxbuffer)==formats[currFormat][0]:
-                print rxbuffer
-                bytestring=struct.pack('{}B'.format(formats[currFormat][0]),*rxbuffer)
-                parsed=struct.unpack(formats[currFormat][1],bytestring)[0]
+            if len(rxbuffer)==format_sizes[currFormat]:
+                bytestring=struct.pack('{}B'.format(format_sizes[currFormat]),*rxbuffer)
+                parsed=struct.unpack(formats[currFormat],bytestring)[0]
                 collectedData.append(parsed)
                 sys.stdout.write(str(parsed))
+                sys.stdout.write(' ')
                 rxbuffer=[]
                 currFormat=(currFormat+1)%len(formats)
                 continue
-            data=ser.read(1)
-            if data==0x0A:
+            if len(collectedData)==len(formats):
                 dataRows.append(collectedData)
                 collectedData=[]
+                rxbuffer=[]
                 sys.stdout.write('\n')
+            data=ser.read(1)
+            if not data:
                 continue
-            elif data==0x20:
-                sys.stdout.write(' ')
-                continue
-            elif not data:
-                continue
-            rxbuffer.append(ord(data))
+            data=struct.unpack('B',data)[0]
+            rxbuffer.append(data)
         except KeyboardInterrupt:
             dataRows.append(collectedData)
             collectedData=[]
@@ -62,6 +76,8 @@ def parseRead(ser,filename):
             ser.close()
             break
     print "Done!"
+    if not filename:
+        return
     with open(filename,'wb') as fp:
         for line in dataRows:
             print line
@@ -100,10 +116,10 @@ def readCSV(filename):
     fp.close()
     return data
 
-def complementEstimates(rawgyro,rawaccel,coeffs=[0.98,0.02],dt=1e-3):
-    gyro = rawgyro/gyroSens
-    accel = rawaccel/accelSens
-    coeffs=array(coeffs)/sum(coeffs)
+def complementEstimates(rawgyro,rawaccel,coeffs=[0.98,0.02],dt=1e-6):
+    gyro = rawgyro
+    accel = rawaccel
+    coeffs=np.array(coeffs)/sum(coeffs)
     estimates=[0]
     for x1,x2 in zip(gyro,accel):
         estimates.append(coeffs[0]*(estimates[-1]+x1*dt)+coeffs[1]*x2)
@@ -112,17 +128,23 @@ def complementEstimates(rawgyro,rawaccel,coeffs=[0.98,0.02],dt=1e-3):
 if __name__=="__main__":
     import argparse
     parser=argparse.ArgumentParser()
-    parser.add_argument('filename',type=str)
-    parser.add_argument('-d','--device',type=int,default=9)
+    parser.add_argument('formats',type=str)
+    parser.add_argument('-o','--outfile',type=str,default=None)
+    parser.add_argument('-d','--device',type=int,default=10)
     parser.add_argument('-r','--rate',type=int,default=9600)
-    parser.add_argument('-v','--verbose',type=int,default=0)
     parsedArgs=parser.parse_args()
     config = {
             'device':parsedArgs.device-1,
             'rate':parsedArgs.rate,
             }
     ser = serial.Serial(config['device'], config['rate'], timeout=0)
-    filename=parsedArgs.filename
-    parseRead(ser,filename)
+    filename=parsedArgs.outfile
+
+    formats=parsedArgs.formats
+    if formats=='raw':
+        rawRead(ser,filename)
+    else:
+        formats=formats.split(',')
+        parseRead(ser,filename,formats)
     ser.close()
 
