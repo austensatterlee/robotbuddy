@@ -3,7 +3,7 @@
 <projectOptions>
 	<deviceVariant value="MSP430G2553"/>
 	<deviceFamily value="MSP430"/>
-	<codegenToolVersion value="4.3.3"/>
+	<codegenToolVersion value="4.4.4"/>
 	<isElfFormat value="true"/>
 	<connection value="common/targetdb/connections/TIMSP430-USB.xml"/>
 	<linkerCommandFile value="lnk_msp430g2553.cmd"/>

@@ -48,11 +48,11 @@ void initializeIMU()
 {
 	// Delays do not need to be this long. Delays are present to keep I2C line clear.
 	// This functions can be altered by the user. Check MPU6050.h file by Jeff Rowberg to determine the sensitivty variables.
-	setClockSource(MPU6050_CLOCK_PLL_XGYRO);	// Set MPU6050 clock
+	setClockSource(MPU6050_CLOCK_PLL_YGYRO);	// Set MPU6050 clock
 	msDelay(10);
-	setFullScaleGyroRange(MPU6050_GYRO_FS_2000);	// Gyroscope sensitivity set to 2000 degrees/sec
+	setFullScaleGyroRange(MPU6050_GYRO_FS_250);	// Gyroscope sensitivity set to 2000 degrees/sec
 	msDelay(10);
-	setFullScaleAccelRange(MPU6050_ACCEL_FS_4);	// Accelerometer sensitivity set to 4g
+	setFullScaleAccelRange(MPU6050_ACCEL_FS_2);	// Accelerometer sensitivity set to 4g
 	msDelay(10);
 	setSleepEnabled(0);	// Wake up device.
 	msDelay(10);

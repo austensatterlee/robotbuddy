@@ -17,11 +17,6 @@ unsigned int timer_counter = 0;
  * Initializes the timer to call the interrupt every 1 second
  */
 void TIMER_init(void) {
-    // Stop watchdog timer
-    WDTCTL = WDTPW + WDTHOLD;
-    // 1MHZ operation
-    BCSCTL1 = CALBC1_1MHZ;
-    DCOCTL = CALDCO_1MHZ;
 
     TA0CCR0 |= 100;
     TA0CCTL0 |= CCIE;

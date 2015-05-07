@@ -30,14 +30,18 @@ def parseRead(ser,filename):
     rxbuffer=[]
     dataRows=[]
     collectedData=[]
+    formats=[(8,'d'),(8,'d'),(8,'d')]
+    currFormat=0
     while True:
         try:
-            if len(rxbuffer)==2:
+            if len(rxbuffer)==formats[currFormat][0]:
                 print rxbuffer
-                parsed=struct.unpack('h',struct.pack('2B',*rxbuffer))[0]
+                bytestring=struct.pack('{}B'.format(formats[currFormat][0]),*rxbuffer)
+                parsed=struct.unpack(formats[currFormat][1],bytestring)[0]
                 collectedData.append(parsed)
                 sys.stdout.write(str(parsed))
                 rxbuffer=[]
+                currFormat=(currFormat+1)%len(formats)
                 continue
             data=ser.read(1)
             if data==0x0A:

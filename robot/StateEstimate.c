@@ -26,20 +26,24 @@ double gyro, pitch;
 
 double angleEstimate = 0;
 
+double getGyroValue(void);
+
 double getAngleEstimate() {
     getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-	UART_out_bytes(&gy, 2);
 
     // Get Gyro Value
     gyro = getGyroValue();
+    UART_out_bytes(&gyro,8);
 
     // Fixing Accel values
     // accel = ((double)(ax) - ACCEL_BIAS) / ACCEL_RANGE;
 
     pitch = calculatePitchFromAccel();
+    UART_out_bytes(&pitch,8);
 
     // State estimation
     angleEstimate = HPF * (angleEstimate + gyro * DT) + LPF * pitch;
+    UART_out_bytes(&angleEstimate,8);
 
 //    UART_out_double(accel_x);
 //    UART_out_double(accel_y);
@@ -52,7 +56,7 @@ double getAngleEstimate() {
 
 // Fixing Gyro values
 double getGyroValue() {
-    return ((double)(gx) - GYRO_BIAS) / GYRO_RANGE;
+    return ((double)(gy) - GYRO_BIAS) / GYRO_RANGE;
 }
 
 double sq(double num){
