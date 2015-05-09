@@ -11,14 +11,14 @@
 
 #include <msp430g2553.h>
 
-float getAngleEstimate();
-float getAngularVelocity();
-float getAngularAcceleration();
+double getAngleEstimate();
+double getAngularVelocity();
+double getAngularAcceleration();
 void burnin();
 
-#define GYRO_RANGE 1.0/131
+#define GYRO_RANGE 1
 
-#define HPF 0.8
+#define HPF 0.98
 #define LPF (1-HPF)
 
 #define PI 3.14159265

@@ -44,7 +44,7 @@ void UART_out_str(char *txString) {
     }
 }
 
-void UART_out_float(float data) {
+void UART_out_double(double data) {
     UART_out_bytes((char*)&data, 8);
 }
 

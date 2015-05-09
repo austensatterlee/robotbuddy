@@ -13,7 +13,7 @@ void UART_init();
 void UART_out_bytes(char*, unsigned int numBytes);
 void UART_out_byte(char*);
 void UART_out_str(char*);
-void UART_out_float(float);
+void UART_out_double(double);
 void UART_out_long(long data, unsigned char ndigits);
 
 #define NEW_LINE '\n'

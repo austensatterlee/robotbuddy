@@ -22,22 +22,22 @@
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 // Define variables and constants
 
-void setMotorSpeedAndDirection(float);
+void setMotorSpeedAndDirection(double);
 void loop();
 void PWM_init();
-float getPIDOutput(float);
+double getPIDOutput(double);
 
 // PWM state variables
 unsigned int duty = 0;
 char isForward = 1;
 unsigned int timer_counter = 0;
 // PID state variables
-float output=0;
-float angle=0;
-float error=0;
-float preverror=0;
-float integral=0;
-float derivative=0;
+double output=0;
+double angle=0;
+double error=0;
+double preverror=0;
+double integral=0;
+double derivative=0;
 
 
 int main(void)
@@ -55,21 +55,22 @@ int main(void)
     P2OUT = 0x00;
     P2DIR = 0xFF;
 
+
     // Initialize the MPU6050 IMU
 	// Assign I2C pins to USCI_A0
     P1SEL |= BIT6 + BIT7;
     P1SEL2|= BIT6 + BIT7;
     initializeIMU();
-    msDelay(1000); // warm-up time
+    msDelay(100); // warm-up time
     burnin();
 
     // Set pins 1.1 and 1.2 to UART outputs
-//	P1SEL |= BIT1 + BIT2;
-//	P1SEL2 |= BIT1 + BIT2;
-//	UART_init();
+	P1SEL |= BIT1 + BIT2;
+	P1SEL2 |= BIT1 + BIT2;
+	UART_init();
 
-//	// Set pins 1.4 and 1.5 to PWM outputs
-    P1DIR |= BIT5 + BIT3;
+	// Set pins 1.4 and 1.5 to PWM outputs
+    P1DIR |= BIT4 + BIT5;
 //    P1SEL |= BIT4 + BIT5;
 	PWM_init();
 
@@ -85,14 +86,14 @@ int main(void)
  * main loop
  */
 void loop() {
-    float angle = getAngleEstimate();
-    float output = getPIDOutput(angle);
+    double angle = getAngleEstimate();
+    double output = getPIDOutput(angle);
     setMotorSpeedAndDirection(output);
     //UART_out_bytes(&output,8);
 }
 
-void setMotorSpeedAndDirection(float output) {
-    if (output >= 0) {
+void setMotorSpeedAndDirection(double output) {
+    if (output > 0) {
         isForward = 1;
     } else {
         isForward = 0;
@@ -104,7 +105,7 @@ void setMotorSpeedAndDirection(float output) {
 }
 
 /* Update PID state and return system output */
-float getPIDOutput(float angle) {
+double getPIDOutput(double angle) {
     error = angle;
     integral += error;
     derivative = getAngularVelocity();
@@ -136,16 +137,11 @@ void PWM_init() {
  */
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer0_A0 () {
-	if(duty==0){
-		   P1OUT &= ~BIT5;
-		   P1OUT &= ~BIT3;
-	}else{
 	   if(isForward){
-		   P1OUT ^= BIT3;
+		   P1OUT ^= BIT4;
 		   P1OUT &= ~BIT5;
 	   }else{
 		   P1OUT ^= BIT5;
-		   P1OUT &= ~BIT3;
+		   P1OUT &= ~BIT4;
 	   }
-	}
 }
