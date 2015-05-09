@@ -1,1 +1,0 @@
-"./Bluetooth.obj" "./I2C_MSP430.obj" "./MSP430_MPU6050.obj" "./StateEstimate.obj" "./UART.obj" "./main.obj" -l"libc.a" 

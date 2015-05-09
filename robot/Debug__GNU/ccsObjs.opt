@@ -1,1 +1,0 @@
-"./Bluetooth.o" "./I2C_MSP430.o" "./MSP430_MPU6050.o" "./StateEstimate.o" "./UART.o" "./main.o" -T"../msp430g2553.ld" -Wl,--start-group -l"c" -l"gcc" -Wl,--end-group 
