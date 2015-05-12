@@ -1,1 +1,0 @@
-"./I2C_MSP430.obj" "./MSP430_MPU6050.obj" "./hwuart.obj" "./main.obj" "../lnk_msp430g2553.cmd" -l"libc.a" 

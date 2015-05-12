@@ -35,7 +35,7 @@ float angleA, angleG;
 
 float angleEstimate = 0;
 
-#define BURNIN 1000
+#define BURNIN 100
 #define BURNIN_DATA 1.0/BURNIN
 
 float getAngularAcceleration();
@@ -45,7 +45,7 @@ void burnin(){
     P1DIR |= BIT0;
     P1OUT |= BIT0;
 	while(i--){
-		if (i%100==0) {
+		if (i%10==0) {
 			P1OUT^=BIT0;
 		}
 		getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
@@ -56,29 +56,17 @@ void burnin(){
 	}
 	P1OUT &= ~BIT0;
 }
+
+/*
+ * Return an estimate in radians of the angle being made with the ground
+ */
 float getAngleEstimate() {
     getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-//    UART_out_bytes((char*)&ax,2);
-//    UART_out_bytes((char*)&ay,2);
-//    UART_out_bytes((char*)&az,2);
-//    UART_out_bytes((char*)&gy,2);
     // Get Gyro Value
     angleG = getAngularVelocity();
-//    UART_out_bytes((char*)&angleG,8);
-
     angleA = getAngularAcceleration();
-//    UART_out_bytes((char*)&angleA,8);
-
     // State estimation
     angleEstimate = HPF * (angleEstimate + angleG * DT) + LPF * angleA;
-//    UART_out_bytes((char*)&angleEstimate,8);
-
-//    UART_out_float(accel_x);
-//    UART_out_float(accel_y);
-//    UART_out_float(accel_z);
-//    UART_out_float(pitch);
-//    UART_out_float(gyro);
-
     return angleEstimate;
 }
 

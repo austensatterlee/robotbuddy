@@ -29,6 +29,7 @@ float getPIDOutput(float);
 
 // PWM state variables
 unsigned int duty = 0;
+unsigned int counter = 0;
 char isForward = 1;
 unsigned int timer_counter = 0;
 // PID state variables
@@ -64,13 +65,12 @@ int main(void)
     burnin();
 
     // Set pins 1.1 and 1.2 to UART outputs
-//	P1SEL |= BIT1 + BIT2;
-//	P1SEL2 |= BIT1 + BIT2;
-//	UART_init();
+	P1SEL |= BIT1 + BIT2;
+	P1SEL2 |= BIT1 + BIT2;
+	UART_init();
 
-//	// Set pins 1.4 and 1.5 to PWM outputs
-    P1DIR |= BIT5 + BIT3;
-//    P1SEL |= BIT4 + BIT5;
+//	// Set pins 1.3 and 1.5 to PWM outputs
+    P1DIR |= MOTORFWD_PIN + MOTORBWD_PIN;
 	PWM_init();
 
 	// Init Bluetooth
@@ -88,19 +88,19 @@ void loop() {
     float angle = getAngleEstimate();
     float output = getPIDOutput(angle);
     setMotorSpeedAndDirection(output);
-    //UART_out_bytes(&output,8);
+    UART_out_bytes(&angle,4);
+    UART_out_bytes(&output,4);
 }
 
 void setMotorSpeedAndDirection(float output) {
     if (output >= 0) {
         isForward = 1;
-    } else {
+    } else if(output < 0) {
         isForward = 0;
         output*=-1;
     }
 
-    duty = Kout * output;
-    TA0CCR1 = MIN(MAX(duty,PWM_PERIOD),0); // saturate pulse width
+    duty = MAX(2,MIN(Kout * (int)output, PWM_PERIOD));
 }
 
 /* Update PID state and return system output */
@@ -119,9 +119,8 @@ float getPIDOutput(float angle) {
  * with a period determined by PWM_PERIOD (measured in clock cycles)
  */
 void PWM_init() {
-    TA0CCR0 = PWM_PERIOD;
-    TA0CCR1 = duty;
-    TA0CCTL0 = OUTMOD_7;
+    TA0CCR0 = 100-1;
+    TA0CCTL1 = OUTMOD_7;
     TA0CCTL0 |= CCIE; // enable the interrupt
     TA0CTL |= TASSEL_2 + MC_1; // set the timer to use SMCLK
 
@@ -136,16 +135,23 @@ void PWM_init() {
  */
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer0_A0 () {
-	if(duty==0){
-		   P1OUT &= ~BIT5;
-		   P1OUT &= ~BIT3;
-	}else{
+	if (counter==1){
+		// Rising edge
 	   if(isForward){
-		   P1OUT ^= BIT3;
-		   P1OUT &= ~BIT5;
+		   P1OUT |= MOTORFWD_PIN;
+		   P1OUT &= ~MOTORBWD_PIN;
 	   }else{
-		   P1OUT ^= BIT5;
-		   P1OUT &= ~BIT3;
+		   P1OUT |= MOTORBWD_PIN;
+		   P1OUT &= ~MOTORFWD_PIN;
 	   }
 	}
+	if (counter>=duty){
+	   // Falling edge
+	   P1OUT &= ~MOTORFWD_PIN;
+	   P1OUT &= ~MOTORBWD_PIN;
+	}
+	if (counter==PWM_PERIOD){
+		counter=0;
+	}
+    counter = counter + 1;
 }

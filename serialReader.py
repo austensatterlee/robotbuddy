@@ -2,6 +2,7 @@ import serial
 import sys
 import numpy as np
 import binascii,struct
+import angleGui
 def rawRead(ser,filename=None,grouping=(4,8)):
     datas=[]
     bytesReceived=0
@@ -137,12 +138,14 @@ if __name__=="__main__":
             'device':parsedArgs.device-1,
             'rate':parsedArgs.rate,
             }
-    ser = serial.Serial(config['device'], config['rate'], timeout=0)
+    ser = serial.Serial(config['device'], config['rate'], timeout=1)
     filename=parsedArgs.outfile
 
     formats=parsedArgs.formats
     if formats=='raw':
         rawRead(ser,filename)
+    elif formats=="gui":
+        angleGui.initializeGui(ser)
     else:
         formats=formats.split(',')
         parseRead(ser,filename,formats)

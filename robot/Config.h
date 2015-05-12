@@ -8,13 +8,16 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define DT 0.001
-#define PWM_PERIOD 65000
-#define Kout 2500
+#define MOTORFWD_PIN BIT3
+#define MOTORBWD_PIN BIT5
 
-#define Kp -100
+#define DT 0.001
+#define PWM_PERIOD 100
+#define Kout 10
+
+#define Kp -115
 #define Ki 0
-#define Kd -0.001
+#define Kd -1
 
 
 #endif /* CONFIG_H_ */
