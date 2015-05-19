@@ -16,13 +16,6 @@ import OpenGL.arrays.vbo as glvbo
 class GLPlotWidget():
     # default window size
     def __init__(self,stream,*args,**kwargs):
-        """
-        Keyword Arguments:
-        dimensions - initial dimensions of GUI window
-        data - signal data to plot
-        view - left and right bounds specifying which samples should fill the screen first
-
-        """
         self.init_time = time.time()
         self.width,self.height = kwargs.get('dimensions',(800,600))
         self.stream = stream
