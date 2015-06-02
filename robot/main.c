@@ -47,14 +47,16 @@ int main(void)
 
 	WDTCTL = WDTPW + WDTHOLD;
     // 1MHZ operation
-    BCSCTL1 = CALBC1_12MHZ;
-    DCOCTL = CALDCO_12MHZ;
+    BCSCTL1 = CALBC1_1MHZ;
+    DCOCTL = CALDCO_1MHZ;
 
     // Reset all pins
     P1OUT = 0x00;
     P1DIR = 0xFF;
     P2OUT = 0x00;
     P2DIR = 0xFF;
+    P3OUT = 0x00;
+    P3DIR = 0xFF;
 
     // Initialize the MPU6050 IMU
 	// Assign I2C pins to USCI_A0
@@ -65,17 +67,17 @@ int main(void)
     burnin();
 
     // Set pins 1.1 and 1.2 to UART outputs
-	P1SEL |= BIT1 + BIT2;
-	P1SEL2 |= BIT1 + BIT2;
-	UART_init();
+    if(UART_ENABLE){
+		P1SEL |= BIT1 + BIT2;
+		P1SEL2 |= BIT1 + BIT2;
+		UART_init();
+    }
 
-//	// Set pins 1.3 and 1.5 to PWM outputs
-    P1DIR |= MOTORFWD_PIN + MOTORBWD_PIN;
+	// Set  PWM outputs
+    P1DIR |= MOTORFWD_PIN + MOTORREV_PIN + PWD_PIN;
+    P1SEL |= PWD_PIN; // set PWD_PIN to timer output
 	PWM_init();
 
-	// Init Bluetooth
-	// Bluetooth_init();
-	P1OUT |= BIT0;
 	for (;;) {
 		loop();
 	}
@@ -88,8 +90,10 @@ void loop() {
     float angle = getAngleEstimate();
     float output = getPIDOutput(angle);
     setMotorSpeedAndDirection(output);
-    UART_out_bytes(&angle,4);
-    UART_out_bytes(&output,4);
+    if(UART_ENABLE){
+		UART_out_bytes(&angle,4);
+		UART_out_bytes(&output,4);
+    }
 }
 
 void setMotorSpeedAndDirection(float output) {
@@ -100,7 +104,7 @@ void setMotorSpeedAndDirection(float output) {
         output*=-1;
     }
 
-    duty = MAX(2,MIN(Kout * (int)output, PWM_PERIOD));
+    duty = MAX(1,MIN(Kout * (int)output, PWM_PERIOD));
 }
 
 /* Update PID state and return system output */
@@ -119,39 +123,24 @@ float getPIDOutput(float angle) {
  * with a period determined by PWM_PERIOD (measured in clock cycles)
  */
 void PWM_init() {
-    TA0CCR0 = 100-1;
+    TA0CCR0 = PWM_PERIOD-1;
+    TA0CCR1 = duty;
     TA0CCTL1 = OUTMOD_7;
     TA0CCTL0 |= CCIE; // enable the interrupt
-    TA0CTL |= TASSEL_2 + MC_1; // set the timer to use SMCLK
-
-    //_BIS_SR(LPM0_bits + GIE);
+    TA0CTL |= TASSEL_2 + MC_1 + ID_3; // set the timer to use SMCLK
 }
 
 /*
- *  Interrupt for PWM output.
- *  Outputs on either pin 1.4 or pin 1.5, depending on intended direction
- *  H-bridge design causes short when 1.4 and 1.5 are both HIGH,
- *  so this condition should be avoided in all circumstances
+ *  Interrupt for PWM output. Applies changes made in setMotorSpeedAndDirection method.
  */
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer0_A0 () {
-	if (counter==1){
-		// Rising edge
-	   if(isForward){
-		   P1OUT |= MOTORFWD_PIN;
-		   P1OUT &= ~MOTORBWD_PIN;
-	   }else{
-		   P1OUT |= MOTORBWD_PIN;
-		   P1OUT &= ~MOTORFWD_PIN;
-	   }
-	}
-	if (counter>=duty){
-	   // Falling edge
+   if(isForward){
+	   P1OUT |= MOTORFWD_PIN;
+	   P1OUT &= ~MOTORREV_PIN;
+   }else{
+	   P1OUT |= MOTORREV_PIN;
 	   P1OUT &= ~MOTORFWD_PIN;
-	   P1OUT &= ~MOTORBWD_PIN;
-	}
-	if (counter==PWM_PERIOD){
-		counter=0;
-	}
-    counter = counter + 1;
+   }
+   TA0CCR1 = duty;
 }

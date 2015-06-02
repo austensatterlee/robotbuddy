@@ -18,7 +18,7 @@ void burnin();
 
 #define GYRO_RANGE 1.0/131
 
-#define HPF 0.90
+#define HPF 0.975
 #define LPF (1-HPF)
 
 #define PI 3.14159265
